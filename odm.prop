@@ -1,0 +1,15 @@
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# ODM partition properties, recreating the stock odm build.prop. TCL ships
+# per-device-code property files (LD.prop / LU.prop) and selects them with
+# ro.boot.device_code.
+#
+
+ro.product.property_source_order=odm,vendor,product,system_ext,system
+
+# Load the SKU properties shipped by the stock odm partition
+import /odm/etc/${ro.boot.device_code}.prop
+
+persist.sys.usb.config=none

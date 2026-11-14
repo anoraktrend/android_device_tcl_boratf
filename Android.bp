@@ -1,0 +1,30 @@
+//
+// SPDX-FileCopyrightText: The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+soong_namespace {
+    imports: [
+        "hardware/mediatek",
+        "hardware/mediatek/libmtkperf_client",
+    ],
+}
+
+// Declares the Soong config namespace used by
+// hardware/mediatek/wlan/libwifi-hal-wrapper to describe the ABI of the
+// stock legacy Wi-Fi HAL it loads (values are set in device.mk). Without a
+// declaration in this namespace, the selects in that module fall back to
+// their default branch (i.e. the post-Android-14 struct layout), which
+// would not match the Android 13 vendor library.
+soong_config_module_type {
+    name: "boratf_mediatek_wifi_hal_cc_library_shared",
+    module_type: "cc_library_shared",
+    config_namespace: "mediatek_wifi_hal",
+    bool_variables: [
+        "use_pre_u_qpr2_struct",
+        "use_pre_baklava_qpr0_struct",
+    ],
+    properties: [
+        "cflags",
+    ],
+}

@@ -1,0 +1,105 @@
+<!--
+     Copyright (C) 2026 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     Stock TCL/TCT vendor HALs that the AOSP framework compatibility matrices
+     do not describe. All entries are optional: the framework may use these
+     HALs when present, but does not require them.
+-->
+<compatibility-matrix version="9.0" type="framework">
+    <!-- Wi-Fi: the device provides the AIDL android.hardware.wifi-service
+         (hardware/interfaces/wifi/aidl/default) with the stock MTK legacy
+         driver plugin, plus the AOSP AIDL supplicant/hostapd. FCM 7 only
+         describes the HIDL android.hardware.wifi 1.3-6 interface (and the
+         AIDL supplicant/hostapd at version 1), so the versions this build
+         ships are declared here. -->
+    <hal format="aidl" optional="true">
+        <name>android.hardware.wifi</name>
+        <version>1-4</version>
+        <interface>
+            <name>IWifi</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.wifi.hostapd</name>
+        <version>1-3</version>
+        <interface>
+            <name>IHostapd</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.wifi.supplicant</name>
+        <version>1-5</version>
+        <interface>
+            <name>ISupplicant</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tcl.camera.algoservice</name>
+        <version>1</version>
+        <interface>
+            <name>ITctCameraAlgoService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tcl.display.nxtvision</name>
+        <version>1</version>
+        <interface>
+            <name>INxtvisionEx</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tcl.hardware.radio.tclrilhook</name>
+        <version>1</version>
+        <interface>
+            <name>ITclRilHook</name>
+            <instance>slot0</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tcl.ipel</name>
+        <version>1</version>
+        <interface>
+            <name>IIpelEngine</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>vendor.tct.hardware.face.facecamera</name>
+        <version>1.0</version>
+        <interface>
+            <name>IFaceCameraDataTransfer</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tct.hardware.node</name>
+        <version>1</version>
+        <interface>
+            <name>INode</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tct.hardware.radio.simlock</name>
+        <version>1</version>
+        <interface>
+            <name>ITctSimlockHal</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.tct.hardware.sysinfo</name>
+        <version>2</version>
+        <interface>
+            <name>ISysInfo</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</compatibility-matrix>

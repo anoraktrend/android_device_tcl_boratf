@@ -1,0 +1,10 @@
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Dalvik
+dalvik.vm.dex2oat64.enabled=true
+
+# Zygote
+zygote.critical_window.minute=10

@@ -1,0 +1,11 @@
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# Product partition properties. The stock product build.prop is dominated by
+# GMS/SetupWizard values that do not apply to LineageOS; only device-relevant
+# values are kept here.
+#
+
+# SetupWizard
+ro.setupwizard.rotation_locked=true
