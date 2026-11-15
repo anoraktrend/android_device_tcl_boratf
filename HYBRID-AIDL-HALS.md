@@ -244,3 +244,54 @@ packages install (`android.hardware.wifi-service`, `wpa_supplicant`,
 rules for them, exactly one for the intentionally kept stock HIDL
 `android.hardware.wifi@1.0-service-lazy`, one for the renamed
 `libwifi-hal-mtk.so`.
+
+## 8. Vendor dependency audit (2026-11-14)
+
+Method: `readelf -d` over all 928 ELFs under
+`vendor/tcl/boratf/proprietary/vendor/{bin,lib,lib64}`, the DT_NEEDED sonames
+diffed against the library basenames present in the built images
+(`vendor`, `system`, `system/system_ext`, `product`).
+
+Result: **73 sonames missing**, each needed by at least one *shipped* vendor
+ELF — those binaries cannot even exec.
+
+Root cause: `tools/filter-conflicts.py` drops a stock blob whenever its path
+appears in the Soong **staging** install set
+(`out/soong/installs-<product>.mk`). That set also contains install paths of
+modules that are *not* in `PRODUCT_PACKAGES`, so dropping the blob leaves
+nobody shipping the file. (The Wi-Fi supplicant/hostapd in §3.1 and the
+`libwifi-hal.so` rename in §3.3 were the same class of bug.)
+
+| class | count | fix |
+|---|---:|---|
+| platform *vendor-compat* modules exist and just had to be selected | 67 | `PRODUCT_PACKAGES` block in `device.mk` |
+| supplied by the stock **system** partition, not the vendor | 1 | imported into the blob tree (`android.system.suspend@1.0.so`, needed by `vendor/bin/factory`) |
+| platform-variant AIDL NDK libs, not present anywhere in the stock images and only built at current versions | 3 | **open** — see below |
+| prohibited Megvii blobs (known limitation) | 2 | none (policy) |
+
+The 67 selected modules fix, among others: `mnld` (libmnl, libcurl, libladder,
+libhidltransport, libsensorndkbridge), `camerahalserver` (libhwbinder,
+camera.provider 2.4-2.6), the audio 7.0 impl chain, keymaster 4.1,
+`secure_element`, `tetheroffloadservice`, the stock HIDL wifi service
+(`android.hardware.wifi@1.0..1.5`), `vendor.mediatek.hardware.*` interface
+libraries, and the MTK shims (`libaedv`, `libpowerhalwrap_vendor`,
+`libprotobuf-cpp-lite-3.9.1-vendorcompat`, …).
+
+Still open (documented in `tools/stock/extra-system-libs.txt`):
+
+| soname | needed by | note |
+|---|---|---|
+| `android.hardware.gnss-V1-ndk_platform.so` | `android.hardware.gnss-service.mediatek`, `android.hardware.gnss-impl-mediatek.so` | GNSS service cannot exec today |
+| `android.hardware.common-V2-ndk_platform.so` | `vendor.tcl.camera.algoservice-V2-ndk_platform.so` | TCL camera algo HAL |
+| `android.hardware.light-V1-ndk_platform.so` | `vendor/bin/factory` | factory test binary |
+
+Options, in order of preference: (a) rebuild the frozen V1/V2 AIDL *platform*
+variants from `hardware/interfaces/*/aidl/aidl_api` and ship them in `/vendor`;
+(b) ship the platform's current copies under those sonames; (c) a
+`blob_fixup` in `extract-files.py` that strips the DT_NEEDED entry (only safe
+where the blob does not actually call into the library).
+
+Follow-up that kills the whole class: make `tools/filter-conflicts.py` use the
+**shipped** set (`out/target/product/boratf/installed-files-vendor.txt`) as the
+drop authority and *warn* — instead of silently dropping — for paths that
+appear only in the staging set.

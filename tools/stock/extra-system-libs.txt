@@ -1,0 +1,19 @@
+# Libraries that the stock *system* partition provided and that stock vendor
+# blobs link against (the stock vendor partition does not ship them, so they
+# are not part of stock-vendor-paths.txt). Extracted from the mounted stock
+# system image (/mnt/system/system/lib64/<name>) into
+# vendor/tcl/boratf/proprietary/vendor/lib64/ and installed by the
+# "extra-system-libs" block at the end of vendor/tcl/boratf/boratf-vendor.mk.
+#
+# <soname>                                                    <needed by>
+android.system.suspend@1.0.so                                 vendor/bin/factory
+#
+# Not resolvable anywhere and therefore still open (see HYBRID-AIDL-HALS.md
+# "vendor dependency audit"): the platform-variant AIDL NDK libraries
+# android.hardware.gnss-V1-ndk_platform.so (android.hardware.gnss-service.mediatek,
+# android.hardware.gnss-impl-mediatek.so), android.hardware.common-V2-ndk_platform.so
+# (vendor.tcl.camera.algoservice-V2-ndk_platform.so) and
+# android.hardware.light-V1-ndk_platform.so (bin/factory). The platform only
+# builds the current versions (gnss V7, light V2), so these need either a
+# blob_fixup that strips the DT_NEEDED entry or a linkerconfig entry that
+# exposes the matching platform libs to the vendor namespace.
