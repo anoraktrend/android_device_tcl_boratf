@@ -141,6 +141,10 @@ BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilts/dtbo.img
 # --------------------------------------------------------------------
 BOARD_HAS_MTK_HARDWARE := true
 
+# Stock vendor is an Android 12 (API 31) prebuilt; keep the system side
+# building against the VNDK 31 snapshot.
+BOARD_VNDK_VERSION := 31
+
 # --------------------------------------------------------------------
 # Properties
 # --------------------------------------------------------------------

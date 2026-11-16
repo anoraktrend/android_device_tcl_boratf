@@ -1,0 +1,53 @@
+<!--
+     Copyright (C) 2026 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     Framework manifest fragment for the stock TCL UHBG vendor's device
+     compatibility matrix.
+
+     /vendor/etc/vintf/compatibility_matrix.xml lists seven framework HALs as
+     optional="false":
+
+         android.frameworks.schedulerservice 1.0
+         android.frameworks.sensorservice    1.0
+         android.hidl.allocator              1.0
+         android.hidl.manager                1.0
+         android.hidl.memory                 1.0
+         android.hidl.token                  1.0
+         android.system.wifi.keystore        1.0
+
+     where the platform already provides:
+
+       sensorservice, hidl.memory, system.wifi.keystore
+              declared by /system/etc/vintf/manifest.xml.
+       hidl.manager @1.2::IServiceManager/default, hidl.token
+              declared by /system/system_ext/etc/vintf/manifest.xml, merged at
+              build time from system/hwservicemanager/hwservicemanager.xml
+              (the binary is still built and links libtokenmanager).
+       hidl.allocator
+              its own fragment + service module, added to PRODUCT_PACKAGES in
+              device.mk (system/libhidl/transport/allocator/1.0/default).
+
+     DO NOT re-declare those three here: a duplicate fqname across the merged
+     manifest and a fragment is a VINTF parse error ("HAL ... has a conflict"),
+     which checkvintf's compat check reports and libvintf hits at runtime.
+
+     The <vendor-ndk> 31 entry the matrix also requires comes from
+     PRODUCT_EXTRA_VNDK_VERSIONS (device.mk); the <system-sdk> 31 entry is
+     already in /system/etc/vintf/manifest.xml.
+-->
+<manifest version="9.0" type="framework">
+    <!-- android.frameworks.schedulerservice has NO Android 17 implementation:
+         frameworks/native/services/schedulerservice does not exist in this
+         tree. It is declared only so the stock vendor's matrix check passes; a
+         caller that actually resolves it gets "service not found", which is
+         also what happens without this declaration. If the stock audio/perf
+         HALs turn out to need it for real priority boosting, this declaration
+         must be replaced by a port of the old service. -->
+    <hal format="hidl" max-level="8">
+        <name>android.frameworks.schedulerservice</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.0::ISchedulingPolicyService/default</fqname>
+    </hal>
+</manifest>

@@ -320,6 +320,72 @@ PRODUCT_PACKAGES += \
     vendor.mediatek.hardware.netdagent@1.0
 
 # --------------------------------------------------------------------
+# FM radio
+# --------------------------------------------------------------------
+# FM is entirely in-tree here: the kernel builds CONFIG_MTK_FMRADIO with
+# CONFIG_MTK_FM_CHIP="MT6631_FM" and exposes /dev/fm, and the stock vendor
+# (which this device keeps) supplies the chip firmware
+# (mt6631_fm_v1_{patch,coeff}.bin, fm_cust.cfg) plus /vendor/bin/fmt and
+# libaudiofmtconv. The stock *apps* (TctFMRadio in priv-app, FMRadio in
+# system_ext) live in the system partition, so a custom system loses them -
+# this app replaces both.
+#
+# packages/apps/FMRadio builds the same /dev/fm client AOSP has always shipped
+# for MediaTek: libfmjni's default source set (fmr_core/fmr_err/common/
+# libfm_jni) is the MT_IOCTL implementation. Verified against this kernel's
+# driver header (drivers/misc/mediatek/connectivity/fmradio/inc/fm_ioctl.h):
+# same FM_IOC_MAGIC 0xf5, 47 shared FM_IOCTL_* names and zero number
+# mismatches. Note the app's jni/fmr/Android.bp selects on the libfmjni
+# soong config namespace; nothing sets SOONG_CONFIG_libfmjni_*, so those
+# selects fall through to their default branch - i.e. the MediaTek sources.
+# (Do not set them: the namespace is undeclared, so a bool variable would be
+# read as a string and fail the select.)
+#
+# The headset is the FM antenna, so this depends on the in-kernel accessory
+# detection, which is present: /sys/bus/platform/drivers/pmic-codec-accdet and
+# the "mt63xx-accdet Headset" input device.
+PRODUCT_PACKAGES += \
+    FMRadio
+
+# --------------------------------------------------------------------
+# Stock-vendor compatibility
+# --------------------------------------------------------------------
+# The stock TCL UHBG vendor is an Android 12 (API 31) prebuilt and carries no
+# VNDK libraries of its own: every vendor HAL links against the VNDK 31 ABI
+# (libbase, libutils, libcutils, liblog, libc++, libhidlbase, libbinder,
+# libprocessgroup, ...). Only the *system* can provide those, as the
+# com.android.vndk.v31 apex - on the working reference setup (TDA GSI on this
+# same vendor) libbase/libc++/libhidlbase resolve from
+# /apex/com.android.vndk.v31/lib64/, and the vendor's device compatibility
+# matrix declares <vendor-ndk><version>31</version>.
+#
+# BOARD_VNDK_VERSION (BoardConfig.mk) is the other half: it makes *our* vendor
+# build against the VNDK 31 snapshot. PRODUCT_EXTRA_VNDK_VERSIONS is what
+# actually ships the apex and adds the vendor-ndk declaration the stock vendor
+# requires. Without it a stock vendor partition cannot resolve its libraries
+# at all.
+PRODUCT_EXTRA_VNDK_VERSIONS := 31
+
+# The stock vendor's manifest declares target-level="5" (Android 10), and
+# libvintf picks the framework compatibility matrix to check it against from
+# that level. Android 17 only generates 7/8/202404/202504/202604, so without
+# these two files the check cannot even start ("Cannot find framework matrix at
+# FCM version 5"). The TDA GSI ships both for the same reason. See the Android.bp
+# entry for the measurement that made this preferable to raising the vendor's
+# target-level.
+PRODUCT_PACKAGES += \
+    compatibility_matrix.5.xml \
+    compatibility_matrix.6.xml
+
+# Framework HALs the stock vendor's device compatibility matrix requires that
+# Android 17 no longer declares (see vintf/boratf_stock_vendor_manifest.xml),
+# plus the HIDL allocator service, which still exists in-tree and carries its
+# own fragment.
+PRODUCT_PACKAGES += \
+    boratf_stock_vendor_manifest.xml \
+    android.hidl.allocator@1.0-service
+
+# --------------------------------------------------------------------
 # Proprietary files
 # --------------------------------------------------------------------
 $(call inherit-product, vendor/tcl/boratf/boratf-vendor.mk)

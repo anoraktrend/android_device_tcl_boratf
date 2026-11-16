@@ -102,4 +102,13 @@
             <instance>default</instance>
         </interface>
     </hal>
+
+    <!-- NOTE: android.hardware.memtrack@1.0 (a stock vendor HAL) must NOT be
+         declared here. A device whose manifest targets level 5 is checked
+         against the *level-5* framework matrix, regardless of what the higher
+         matrices list - and this fragment merges into the highest one, which
+         already has memtrack. The entry therefore lives in the shipped
+         vintf/fcm/compatibility_matrix.5.xml instead, where it actually
+         matters; adding it here as well would only risk a duplicate-fqname
+         conflict at merge time. -->
 </compatibility-matrix>

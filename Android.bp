@@ -10,6 +10,45 @@ soong_namespace {
     ],
 }
 
+// Framework manifest fragment for the stock vendor's device compatibility
+// matrix: hidl.manager / hidl.token / schedulerservice. Installed into
+// /system/system_ext/etc/vintf/manifest/ so it is merged into the framework
+// manifest. See the XML for why each entry exists and which one is a
+// compatibility-only declaration.
+vintf_fragment {
+    name: "boratf_stock_vendor_manifest.xml",
+    src: "vintf/boratf_stock_vendor_manifest.xml",
+    system_ext_specific: true,
+}
+
+// Framework compatibility matrices for levels 5 and 6 (Android 10/11), which
+// Android 17 no longer generates.
+//
+// The stock vendor's manifest declares target-level="5", and libvintf resolves
+// the matrix to check it against by that level - without the file it fails with
+// "Cannot find framework matrix at FCM version 5. Looked in: ... 7.xml, 8.xml,
+// 202404.xml, 202604.xml". The reference setup for this vendor (the TDA GSI,
+// Android 16) ships compatibility_matrix.5.xml *and* .6.xml for exactly this
+// reason. They are static historical artifacts: level 5's matrix carries only
+// kernel config requirements and level 6's 79 HAL entries, neither of which
+// changes any more, so shipping them as prebuilts is stable.
+//
+// (The alternative - bumping the stock vendor's target-level to 7 so the
+// platform's own matrix applies - was measured with checkvintf and is worse:
+// it reports 5 undeclared HALs (bluetooth.audio@2.1, health@2.1, memtrack@1.0,
+// wifi.hostapd@1.3, wifi.supplicant@1.4) instead of 1.)
+prebuilt_etc {
+    name: "compatibility_matrix.5.xml",
+    src: "vintf/fcm/compatibility_matrix.5.xml",
+    sub_dir: "vintf",
+}
+
+prebuilt_etc {
+    name: "compatibility_matrix.6.xml",
+    src: "vintf/fcm/compatibility_matrix.6.xml",
+    sub_dir: "vintf",
+}
+
 // Declares the Soong config namespace used by
 // hardware/mediatek/wlan/libwifi-hal-wrapper to describe the ABI of the
 // stock legacy Wi-Fi HAL it loads (values are set in device.mk). Without a
