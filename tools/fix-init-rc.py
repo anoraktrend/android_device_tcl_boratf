@@ -1,14 +1,27 @@
 #!/usr/bin/env python3
 """Make the stock vendor init scripts acceptable to modern init.
 
-Two legacy patterns are fixed:
+Three legacy patterns are fixed:
 
 1. services without a `user` line (modern host_init_verifier rejects the
    implicit-root default);
 2. `interface` lines naming HIDL interfaces that this build does not define
    (vendor.mediatek.hardware.dmc/apmonitor/... blobs, not built from source).
    The lines are verification metadata only - services still register with
-   hwservicemanager at runtime.
+   hwservicemanager at runtime;
+3. `insmod /vendor/lib/modules/*.ko` lines. The stock MediaTek combo stack
+   (wmt_drv, wlan_drv_gen4m, bt_drv_connac1x, gps_drv, fmradio_drv_mt6631,
+   connfem, mt6357-accdet, fpsgo, met) ships as .ko files built for the stock
+   4.19.191 kernel; this device's kernel is 4.19.325 and builds every one of
+   those drivers in-tree, so the modules are not shipped and each insmod would
+   fail. The drivers are the same code - /dev/wmtWifi, /dev/stp{bt,gps,wmt}
+   and /dev/wmtdetect come from the built-in driver, and wifi associates with
+   an empty /proc/modules.
+
+   Only the insmod lines are dropped, never the whole file: init.wlan_drv.rc
+   also does `start wlan_assistant` (which is what brings wifi up) and
+   init.bt_drv.rc also does `chown bluetooth /proc/driver/bt_dbg`. A stanza
+   left with no commands is valid - init parses it and does nothing.
 
 Idempotent: run it after every extract-files.py run.
 
@@ -32,6 +45,7 @@ def fix_file(path: str) -> int:
     out = []
     fixed = 0
     stripped = 0
+    noinsmod = 0
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -40,6 +54,11 @@ def fix_file(path: str) -> int:
             # drop HIDL interface declarations; unknown ones fail verification
             if re.match(r"^\s+interface\s+vendor\.", line):
                 stripped += 1
+                i += 1
+                continue
+            # drop module loading: those drivers are built into this kernel
+            if re.match(r"^\s*insmod\s+/vendor/lib/modules/", line):
+                noinsmod += 1
                 i += 1
                 continue
             out.append(line)
@@ -69,27 +88,31 @@ def fix_file(path: str) -> int:
             fixed += 1
         i = cmd_end + 1
 
-    if fixed or stripped:
+    if fixed or stripped or noinsmod:
         with open(path, "w") as f:
             f.writelines(out)
-    return fixed, stripped
+    return fixed, stripped, noinsmod
 
 
 def main():
     total_fixed = 0
     total_stripped = 0
+    total_insmod = 0
     for root, _, files in os.walk(RC_DIR):
         for name in files:
             if not name.endswith(".rc"):
                 continue
             path = os.path.join(root, name)
-            fixed, stripped = fix_file(path)
-            if fixed or stripped:
+            fixed, stripped, noinsmod = fix_file(path)
+            if fixed or stripped or noinsmod:
                 rel = os.path.relpath(path, RC_DIR)
-                print(f"  {rel}: +user root ({fixed}), -interface ({stripped})")
+                print(f"  {rel}: +user root ({fixed}), -interface ({stripped}), "
+                      f"-insmod ({noinsmod})")
                 total_fixed += fixed
                 total_stripped += stripped
-    print(f"patched {total_fixed} services, stripped {total_stripped} interface lines")
+                total_insmod += noinsmod
+    print(f"patched {total_fixed} services, stripped {total_stripped} interface lines, "
+          f"dropped {total_insmod} insmod lines")
 
 
 if __name__ == "__main__":
