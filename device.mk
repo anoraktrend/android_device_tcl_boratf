@@ -243,6 +243,13 @@ $(call soong_config_set_bool,mediatek_wifi_hal,use_pre_baklava_qpr0_struct,true)
 #
 # libMegvii/libmegface are deliberately absent (prohibited-files policy).
 # --------------------------------------------------------------------
+
+# The vendor variants of those libraries are installed by this dependency
+# carrier module (see vendor_compat/Android.bp): PRODUCT_PACKAGES alone only
+# installs the platform variants into /system, which vendor processes cannot
+# load.
+PRODUCT_PACKAGES += \
+    boratf_vendor_compat_libs
 PRODUCT_PACKAGES += \
     android.hardware.audio.common@7.0 \
     android.hardware.audio.common@7.0-enums \

@@ -1,0 +1,112 @@
+//
+// SPDX-FileCopyrightText: The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// Installs the *vendor variants* of the platform compat libraries that the
+// stock vendor blobs link against.
+//
+// Selecting a module in PRODUCT_PACKAGES only installs its platform variant
+// into /system, which a vendor process cannot reach: /system/lib64 is not in
+// the vendor linker namespace (and llndk.libraries.txt does not list these
+// interfaces). The vendor variant is installed when a *vendor* module depends
+// on it - the same mechanism that puts
+// android.hardware.wifi.supplicant-V5-ndk.so into /vendor for the source-built
+// AIDL supplicant.
+//
+// So this module exists purely to carry the dependency list. Its own output is
+// an empty stub library.
+//
+// Regenerate the list with the dependency audit (readelf -d over every vendor
+// ELF vs the built images); see HYBRID-AIDL-HALS.md section 8.
+cc_library_shared {
+    name: "boratf_vendor_compat_libs",
+    vendor: true,
+    srcs: ["empty.cpp"],
+    stl: "none",
+    // Linking these installs their *vendor* variants into /vendor (the
+    // mechanism that already puts android.hardware.gatekeeper@1.0.so there).
+    shared_libs: [
+        "android.hardware.audio.common@7.0",
+        "android.hardware.audio.common@7.0-enums",
+        "android.hardware.audio.common@7.0-util",
+        "android.hardware.audio.effect@7.0",
+        "android.hardware.audio@7.0",
+        "android.hardware.audio@7.0-util",
+        "android.hardware.biometrics.face@1.0",
+        "android.hardware.bluetooth@1.0",
+        "android.hardware.bluetooth@1.1",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.camera.provider@2.5",
+        "android.hardware.camera.provider@2.6",
+        "android.hardware.gatekeeper@1.0",
+        "android.hardware.keymaster@3.0",
+        "android.hardware.keymaster@4.0",
+        "android.hardware.keymaster@4.1",
+        "android.hardware.radio.config@1.0",
+        "android.hardware.radio.config@1.1",
+        "android.hardware.radio.config@1.2",
+        "android.hardware.radio.config@1.3",
+        "android.hardware.radio@1.2",
+        "android.hardware.radio@1.3",
+        "android.hardware.radio@1.4",
+        "android.hardware.radio@1.5",
+        "android.hardware.radio@1.6",
+        "android.hardware.secure_element@1.0",
+        "android.hardware.secure_element@1.1",
+        "android.hardware.secure_element@1.2",
+        "android.hardware.tetheroffload.config@1.0",
+        "android.hardware.tetheroffload.control@1.0",
+        "android.hardware.tetheroffload.control@1.1",
+        "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.1",
+        "android.hardware.wifi@1.2",
+        "android.hardware.wifi@1.3",
+        "android.hardware.wifi@1.4",
+        "android.hardware.wifi@1.5",
+        "android.system.wifi.keystore@1.0",
+        "libaedv",
+        "libavservices_minijail_vendor",
+        "libcamera2ndk_vendor",
+        "libcodec2_hidl@1.0",
+        "libcodec2_hidl@1.1",
+        "libcodec2_hidl@1.2",
+        "libcodec2_soft_common",
+        "libcurl",
+        "libdrm",
+        "libkeymaster4",
+        "libkeymaster41",
+        "libkeymaster4_1support",
+        "libkeymaster4support",
+        "libkeymaster_messages",
+        "libkeymaster_portable",
+        "libkeystore-engine-wifi-hidl",
+        "libkeystore-wifi-hidl",
+        "libladder",
+        "libmegface",
+        "libmtkperf_client_vendor",
+        "libopus",
+        "libpowerhalwrap_vendor",
+        "libprotobuf-cpp-lite-3.9.1-vendorcompat",
+        "libpuresoftkeymasterdevice",
+        "libsensorndkbridge",
+        "libstagefright_enc_common",
+        "libstagefright_flacdec",
+        "libstagefright_softomx",
+        "libtinycompress",
+        "libvorbisidec",
+        "libvpx",
+        "vendor.mediatek.hardware.bluetooth.audio@2.1",
+        "vendor.mediatek.hardware.bluetooth.audio@2.2",
+        "vendor.mediatek.hardware.lbs@1.0",
+        "vendor.mediatek.hardware.log@1.0",
+        "vendor.mediatek.hardware.mtkradioex@2.0",
+        "vendor.mediatek.hardware.mtkradioex@3.0",
+        "vendor.mediatek.hardware.netdagent@1.0",
+    ],
+
+// Not listed on purpose: libhidltransport, libhwbinder and libmnl have
+// restricted Soong visibility ("not visible to this module"), and both
+// shared_libs and required are subject to it. They are handled separately
+// (see HYBRID-AIDL-HALS.md section 9).
+}

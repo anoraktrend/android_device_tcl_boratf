@@ -131,7 +131,17 @@ RENAMES = {
 }
 
 
+# Paths inside a DROP_PREFIX that must still be shipped. The Trustonic TA
+# registry lives under vendor/app/ but is data the TEE/keymaster stack loads
+# (device/mediatek/sepolicy_vndr already labels it mobicore_vendor_file).
+KEEP_PREFIX = (
+    "vendor/app/mcRegistry/",
+)
+
+
 def drop(p):
+    if p.startswith(KEEP_PREFIX):
+        return False
     if p in DROP_EXACT:
         return True
     return any(p.startswith(pref) for pref in DROP_PREFIX)
@@ -220,6 +230,10 @@ def main():
         line = rel
         if rel in extra:
             line += ";SYMLINK=" + ",".join(sorted(extra[rel]))
+        elif rel.startswith("vendor/app/mcRegistry/"):
+            # Raw copy rule: the TA registry must land in /vendor/app/ (a
+            # generated prebuilt module would install it elsewhere).
+            line += ";MAKE_COPY_RULE_ONLY"
         elif rel.startswith("vendor/etc/vintf/") and rel.endswith(".xml"):
             # Plain copy rules: extract-utils would otherwise turn these into
             # prebuilt_etc_xml modules whose generic names (gnss-default.xml,
